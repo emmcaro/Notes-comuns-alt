@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Entrenador de Notes Comuns</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+
+    :root {
+      --bg-dark: #1C2135;
+      --card-bg: #2C344F;
+      --primary-text: #FFFFFF;
+      --secondary-text: #A9B1D6;
+      --accent-pink: #E04463;
+      --accent-green: #89d489;
+      --input-border: #414868;
+    }
+
+    body {
+      font-family: 'Inter', Arial, sans-serif;
+      text-align: center;
+      margin: 0;
+      background-color: var(--bg-dark);
+      color: var(--secondary-text);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+
+    .container {
+      background-color: var(--card-bg);
+      padding: 30px;
+      border-radius: 20px;
+      width: 100%;
+      max-width: 450px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    }
+    
+    h1 {
+      font-size: 1.3em;
+      color: var(--primary-text);
+      font-weight: 700;
+      margin: 0 0 25px 0;
+    }
+
+    .top-info {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+      font-size: 0.9em;
+    }
+
+    #punts, #temps {
+      margin: 0;
+    }
+    
+    #pregunta {
+      font-size: 1.5em;
+      font-weight: 700;
+      color: var(--primary-text);
+      margin: 0 0 25px 0;
+      line-height: 1.4;
+    }
+    
+    #pregunta strong {
+        color: var(--accent-pink);
+    }
+
+    #resultat, #resum {
+      font-weight: bold;
+      font-size: 1.1em;
+      min-height: 50px;
+      line-height: 1.4;
+      color: var(--accent-pink);
+      margin-bottom: 25px;
+    }
+    
+    .resposta-correcta-error {
+        color: var(--accent-green);
+        font-size: 1.2em;
+        display: inline-block;
+        margin-top: 6px;
+    }
+
+    #resum {
+        min-height: auto;
+        color: var(--primary-text);
+    }
+
+    input {
+      padding: 18px;
+      width: 100%;
+      font-size: 1.1em;
+      margin-bottom: 20px;
+      box-sizing: border-box;
+      background-color: var(--bg-dark);
+      border: 1px solid var(--input-border);
+      border-radius: 10px;
+      color: var(--primary-text);
+      text-align: center;
+    }
+    
+    input::placeholder {
+        color: var(--secondary-text);
+        opacity: 0.7;
+    }
+
+    button {
+      display: block;
+      width: 100%;
+      margin: 10px auto;
+      padding: 18px 0;
+      font-size: 1.1em;
+      font-weight: bold;
+      cursor: pointer;
+      border: none;
+      background-color: var(--accent-pink);
+      color: var(--primary-text);
+      border-radius: 10px;
+      transition: filter 0.2s;
+    }
+    
+    button:hover:not(:disabled) {
+        filter: brightness(1.1);
+    }
+
+    button:disabled {
+      background-color: #5b6079;
+      color: #9a9fb5;
+      cursor: not-allowed;
+    }
+
+    audio {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h1>🎼 Notes Comuns entre Acords</h1>
+
+    <div class="top-info">
+        <p id="punts">Punts: 0</p>
+        <p id="temps">Temps: -</p>
+    </div>
+
+    <p id="pregunta">Carregant...</p>
+    <p id="resultat"></p>
+
+    <input type="text" id="resposta" placeholder="Ex: C E o 0 si cap" autocomplete="off" />
+    <button id="btnSeguent">Següent Repte</button>
+
+    <p id="resum"></p>
+  </div>
+
+  <audio id="soCorrecte" src="sounds/correcte.mp3" preload="auto"></audio>
+  <audio id="soError" src="sounds/error.mp3" preload="auto"></audio>
+  <audio id="soBenvinguda" src="sounds/benvinguda.mp3" preload="auto"></audio>
+
+  <script>
+    // Estructura de dades per nivells que hem definit
+    const acordsPerNivell = {
+      facil: { "C": ["C", "E", "G"], "D": ["D", "F#", "A"], "E": ["E", "G#", "B"], "F": ["F", "A", "C"], "G": ["G", "B", "D"], "A": ["A", "C#", "E"], "B": ["B", "D#", "F#"], "Cm": ["C", "Eb", "G"], "Dm": ["D", "F", "A"], "Em": ["E", "G", "B"], "Fm": ["F", "Ab", "C"], "Gm": ["G", "Bb", "D"], "Am": ["A", "C", "E"], "Bm": ["B", "D", "F#"] },
+      mitja: { "F#": ["F#", "A#", "C#"], "Bb": ["Bb", "D", "F"], "Eb": ["Eb", "G", "Bb"], "Ab": ["Ab", "C", "Eb"], "Db": ["Db", "F", "Ab"], "Bbm": ["Bb", "Db", "F"], "Ebm": ["Eb", "Gb", "Bb"], "F#m": ["F#", "A", "C#"], "Abm": ["Ab", "Cb", "Eb"] },
+      dificil: { "G#m": ["G#", "B", "D#"], "C#m": ["C#", "E", "G#"], "A#m": ["A#", "C#", "E#"], "Dbm": ["Db", "Fb", "Ab"], "Cb": ["Cb", "Eb", "Gb"], "A#": ["A#", "C##", "E#"], "C#": ["C#", "E#", "G#"], "D#m": ["D#", "F#", "A#"], "Gb": ["Gb", "Bb", "Db"] }
+    };
+
+    let nivellActualJoc = 'facil', puntsNivellFacil = 0, puntsNivellMitja = 0;
+    let acord1 = "", acord2 = "", notesComunes = [];
+    let punts = 0, totalRespostes = 0;
+    const tempsMaxim = 15;
+    let temps = tempsMaxim, intervalId = null;
+    let respostaJaComprovada = false;
+
+    const btnSeguent = document.getElementById("btnSeguent");
+    const inputResposta = document.getElementById("resposta");
+    const preguntaEl = document.getElementById("pregunta");
+    const resultatEl = document.getElementById("resultat");
+    const puntsEl = document.getElementById("punts");
+    const tempsEl = document.getElementById("temps");
+    const resumEl = document.getElementById("resum");
+
+    const soCorrecte = document.getElementById("soCorrecte");
+    const soError = document.getElementById("soError");
+    const soBenvinguda = document.getElementById("soBenvinguda");
+
+    function obtenirAcordsNivellActual() {
+      if (nivellActualJoc === 'facil') return acordsPerNivell.facil;
+      if (nivellActualJoc === 'mitja') return acordsPerNivell.mitja;
+      return acordsPerNivell.dificil;
+    }
+
+    function nouRepte() {
+      if (totalRespostes >= 10) {
+        bloquejarSiAcabat();
+        return;
+      }
+
+      const acordsDelNivell = obtenirAcordsNivellActual();
+      const nomsAcords = Object.keys(acordsDelNivell);
+      
+      acord1 = nomsAcords[Math.floor(Math.random() * nomsAcords.length)];
+      do {
+        acord2 = nomsAcords[Math.floor(Math.random() * nomsAcords.length)];
+      } while (acord1 === acord2);
+
+      const notes1 = acordsDelNivell[acord1];
+      const notes2 = acordsDelNivell[acord2];
+      notesComunes = notes1.filter(n => notes2.includes(n));
+
+      preguntaEl.innerHTML = `Quines notes tenen en comú <strong>${acord1}</strong> i <strong>${acord2}</strong>?`;
+      
+      resultatEl.innerHTML = "";
+      inputResposta.value = "";
+      tempsEl.textContent = `Temps: ${tempsMaxim}s`;
+      temps = tempsMaxim;
+      if (intervalId) clearInterval(intervalId);
+      intervalId = setInterval(actualitzarTemps, 1000);
+      respostaJaComprovada = false;
+      btnSeguent.disabled = true;
+      inputResposta.disabled = false;
+      inputResposta.focus();
+    }
+
+    function actualitzarTemps() {
+      temps--;
+      tempsEl.textContent = `Temps: ${temps}s`;
+      if (temps <= 0 && !respostaJaComprovada) {
+        clearInterval(intervalId);
+        soError.play();
+        const missatgeCorrecte = notesComunes.length > 0 ? notesComunes.join(" ") : "0";
+        const missatgeHtml = `Temps esgotat!<br><span class="resposta-correcta-error">${missatgeCorrecte}</span>`;
+        mostrarResultat(false, missatgeHtml);
+        totalRespostes++;
+        respostaJaComprovada = true;
+        btnSeguent.disabled = false;
+        bloquejarSiAcabat();
+      }
+    }
+    
+    // Funció de neteja ORDENANT les notes, ja que l'ordre no importa
+    function netejarNotes(arr) {
+      return arr.map(n => n.trim().toUpperCase()).sort();
+    }
+
+    function comprovar() {
+      if (respostaJaComprovada || temps <= 0) return;
+      
+      const respostaText = inputResposta.value.trim();
+      // Si la resposta està buida, no fem res
+      if (respostaText === '') return;
+
+      let respostaNeta = netejarNotes(respostaText.split(/\s+/));
+      const comunesNeta = netejarNotes(notesComunes);
+      
+      // Lògica per gestionar el cas especial de "0"
+      const respostaCorrecta = comunesNeta.length === 0 ? ["0"] : comunesNeta;
+      if (respostaNeta.length === 1 && respostaNeta[0] === "0") {
+        respostaNeta = ["0"];
+      }
+      
+      clearInterval(intervalId);
+      totalRespostes++;
+      respostaJaComprovada = true;
+      
+      if (JSON.stringify(respostaNeta) === JSON.stringify(respostaCorrecta)) {
+        punts++;
+        soCorrecte.play();
+        let missatge = "Correcte!";
+        
+        if (nivellActualJoc === 'facil') {
+          puntsNivellFacil++;
+          if (puntsNivellFacil === 4) {
+            nivellActualJoc = 'mitja';
+            missatge = "Correcte! 🎉 Has pujat al nivell Mitjà!";
+          }
+        } else if (nivellActualJoc === 'mitja') {
+          puntsNivellMitja++;
+          if (puntsNivellMitja === 4) {
+            nivellActualJoc = 'dificil';
+            missatge = "Correcte! 🔥 Has pujat al nivell Difícil!";
+          }
+        }
+        
+        mostrarResultat(true, missatge);
+      } else {
+        soError.play();
+        const missatgeCorrecte = comunesNeta.length > 0 ? comunesNeta.join(" ") : "0";
+        const missatgeHtml = `Incorrecte.<br><span class="resposta-correcta-error">${missatgeCorrecte}</span>`;
+        mostrarResultat(false, missatgeHtml);
+      }
+      
+      puntsEl.textContent = `Punts: ${punts}`;
+      btnSeguent.disabled = false;
+      bloquejarSiAcabat();
+    }
+
+    function mostrarResultat(correcte, missatge) {
+      resultatEl.innerHTML = missatge;
+      resultatEl.style.color = correcte ? "var(--accent-green)" : "var(--accent-pink)";
+    }
+
+    function bloquejarSiAcabat() {
+      if (totalRespostes >= 10) {
+        resumEl.textContent = `Test acabat! Has fet ${punts} punts de 10.`;
+        btnSeguent.disabled = true;
+        inputResposta.disabled = true;
+        if(intervalId) clearInterval(intervalId);
+        tempsEl.textContent = "Temps: 0s";
+      }
+    }
+
+    btnSeguent.addEventListener("click", () => {
+       if (totalRespostes < 10) nouRepte();
+    });
+
+    inputResposta.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        if(!respostaJaComprovada) {
+            comprovar();
+        } else {
+            btnSeguent.click();
+        }
+      }
+    });
+
+    window.onload = () => {
+      soBenvinguda.play().catch(() => {});
+      nouRepte();
+    };
+  </script>
+</body>
+</html>
